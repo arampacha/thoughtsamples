@@ -4,7 +4,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
-<title>A Transformer based Language Model from scratch | fastpages</title>
+<title>A Transformer based Language Model from scratch | thoughtsamples</title>
 <meta name="generator" content="Jekyll v4.1.1" />
 <meta property="og:title" content="A Transformer based Language Model from scratch" />
 <meta name="author" content="Arto" />
@@ -13,14 +13,30 @@
 <meta property="og:description" content="Building transformer with simple building blocks" />
 <link rel="canonical" href="https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html" />
 <meta property="og:url" content="https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html" />
-<meta property="og:site_name" content="fastpages" />
+<meta property="og:site_name" content="thoughtsamples" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-01-02T00:00:00-06:00" />
 <script type="application/ld+json">
-{"description":"Building transformer with simple building blocks","url":"https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html","@type":"BlogPosting","headline":"A Transformer based Language Model from scratch","dateModified":"2021-01-02T00:00:00-06:00","datePublished":"2021-01-02T00:00:00-06:00","author":{"@type":"Person","name":"Arto"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html"},"@context":"https://schema.org"}</script>
+{"url":"https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html","@type":"BlogPosting","headline":"A Transformer based Language Model from scratch","dateModified":"2021-01-02T00:00:00-06:00","datePublished":"2021-01-02T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html"},"author":{"@type":"Person","name":"Arto"},"description":"Building transformer with simple building blocks","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/thoughtsamples/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://arampacha.github.io/thoughtsamples/feed.xml" title="fastpages" /><link rel="shortcut icon" type="image/x-icon" href="/thoughtsamples/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="/thoughtsamples/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://arampacha.github.io/thoughtsamples/feed.xml" title="thoughtsamples" /><link rel="shortcut icon" type="image/x-icon" href="/thoughtsamples/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
 
 <script>
 function wrap_img(fn) {
@@ -54,7 +70,7 @@ window.onload = wrap_img;
 </head>
 <body><header class="site-header">
 
-  <div class="wrapper"><a class="site-title" rel="author" href="/thoughtsamples/">fastpages</a><nav class="site-nav">
+  <div class="wrapper"><a class="site-title" rel="author" href="/thoughtsamples/">thoughtsamples</a><nav class="site-nav">
         <input type="checkbox" id="nav-trigger" class="nav-trigger" />
         <label for="nav-trigger">
           <span class="menu-icon">
@@ -106,12 +122,7 @@ window.onload = wrap_img;
     </a>
 </div>
 
-          <div class="px-2">
-    <a href="https://mybinder.org/v2/gh/arampacha/thoughtsamples/master?filepath=_notebooks%2F2021-01-02-transformer-lm-from-scratch.ipynb" target="_blank">
-        <img class="notebook-badge-image" src="/thoughtsamples/assets/badges/binder.svg" alt="Open In Binder"/>
-    </a>
-</div>
-
+          
           <div class="px-2">
     <a href="https://colab.research.google.com/github/arampacha/thoughtsamples/blob/master/_notebooks/2021-01-02-transformer-lm-from-scratch.ipynb" target="_blank">
         <img class="notebook-badge-image" src="/thoughtsamples/assets/badges/colab.svg" alt="Open In Colab"/>
@@ -154,25 +165,6 @@ window.onload = wrap_img;
 
 <div class="container" id="notebook-container">
         
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="k">if</span> <span class="s1">'google.colab'</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
-    <span class="o">!</span>pip install -Uqq fastai
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-    
-
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -532,7 +524,7 @@ window.onload = wrap_img;
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><img src="https://github.com/fastai/course-v3/blob/master/nbs/dl2/images/attention.png?raw=1" alt="Multi head attention"></p>
+<p><img src="https://github.com/fastai/course-v3/blob/master/nbs/dl2/images/attention.png?raw=1" alt="Multi head attention" title="credit: Attention is all you need"></p>
 
 </div>
 </div>
@@ -1396,6 +1388,9 @@ In this way each position in a sequence will get unique vector associated with i
     
     
 <div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
 <div class="input">
 
 <div class="inner_cell">
@@ -1412,6 +1407,7 @@ In this way each position in a sequence will get unique vector associated with i
 </div>
 </div>
 
+    </details>
 <div class="output_wrapper">
 <div class="output">
 
@@ -2466,6 +2462,9 @@ In this way each position in a sequence will get unique vector associated with i
     
     
 <div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
 <div class="input">
 
 <div class="inner_cell">
@@ -2494,6 +2493,7 @@ In this way each position in a sequence will get unique vector associated with i
 </div>
 </div>
 
+    </details>
 </div>
     
 
@@ -3072,6 +3072,9 @@ alice was beginning to get very tired of sitting by her sister on
     
     
 <div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
 <div class="input">
 
 <div class="inner_cell">
@@ -3125,6 +3128,7 @@ alice was beginning to get very tired of sitting by her sister on
 </div>
 </div>
 
+    </details>
 </div>
     
 
@@ -3674,23 +3678,7 @@ Wall time: 13min 35s
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span> <span class="o">=</span> <span class="n">learn</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="o">/</span><span class="s1">'char_bookcorpus_10m'</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-    
-
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">lr_find</span><span class="p">()</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">lr_find</span><span class="p">()</span>
 </pre></div>
 
     </div>
@@ -3860,6 +3848,14 @@ Wall time: 13min 35s
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As you see pretraining model on large corpus followed by finetuning helped to reduce validation loss from arount 1.53 to 1.037 and improve accuracy in predicting next character to 68% (compared to 56.7% before). Let's see how it effects sampled text:</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -3880,6 +3876,9 @@ Wall time: 13min 35s
     
     
 <div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
 <div class="input">
 
 <div class="inner_cell">
@@ -3891,6 +3890,7 @@ Wall time: 13min 35s
 </div>
 </div>
 
+    </details>
 <div class="output_wrapper">
 <div class="output">
 
@@ -3943,11 +3943,11 @@ Wall time: 13min 35s
         </p>
       </div>
       <div class="footer-col">
-        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+        <p>trying to sample non-random stuff from my neural net</p>
       </div>
     </div>
 
-    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/thoughtsamples/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/thoughtsamples/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/arampacha" title="arampacha"><svg class="svg-icon grey"><use xlink:href="/thoughtsamples/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
 </div>
 
   </div>
