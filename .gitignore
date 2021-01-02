@@ -12,3 +12,8 @@ _notebooks/.ipynb_checkpoints
 .netlify
 .tweet-cache
 __pycache__
+# vscode stuff
+.vscode/*
+*.code-workspace
+# Local History for Visual Studio Code
+.history/
