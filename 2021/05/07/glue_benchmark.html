@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Finetuning Transformers on GLUE benchmark | thoughtsamples</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Finetuning Transformers on GLUE benchmark" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="trying to sample non-random stuff from my neural net" />
+<meta property="og:description" content="trying to sample non-random stuff from my neural net" />
+<link rel="canonical" href="https://arampacha.github.io/thoughtsamples/2021/05/07/glue_benchmark.html" />
+<meta property="og:url" content="https://arampacha.github.io/thoughtsamples/2021/05/07/glue_benchmark.html" />
+<meta property="og:site_name" content="thoughtsamples" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-05-07T00:00:00-05:00" />
+<script type="application/ld+json">
+{"url":"https://arampacha.github.io/thoughtsamples/2021/05/07/glue_benchmark.html","@type":"BlogPosting","headline":"Finetuning Transformers on GLUE benchmark","dateModified":"2021-05-07T00:00:00-05:00","datePublished":"2021-05-07T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://arampacha.github.io/thoughtsamples/2021/05/07/glue_benchmark.html"},"description":"trying to sample non-random stuff from my neural net","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/thoughtsamples/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://arampacha.github.io/thoughtsamples/feed.xml" title="thoughtsamples" /><link rel="shortcut icon" type="image/x-icon" href="/thoughtsamples/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/thoughtsamples/">thoughtsamples</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/thoughtsamples/about/">About Me</a><a class="page-link" href="/thoughtsamples/search/">Search</a><a class="page-link" href="/thoughtsamples/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Finetuning Transformers on GLUE benchmark</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-05-07T00:00:00-05:00" itemprop="datePublished">
+        May 7, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      17 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/arampacha/thoughtsamples/tree/master/_notebooks/2021-05-07-glue_benchmark.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/thoughtsamples/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/arampacha/thoughtsamples/blob/master/_notebooks/2021-05-07-glue_benchmark.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/thoughtsamples/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-05-07-glue_benchmark.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModelForSequenceClassification</span>
+<span class="kn">from</span> <span class="nn">fastai.text.all</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">fastai.callback.wandb</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">from</span> <span class="nn">fasthugs.learner</span> <span class="kn">import</span> <span class="n">TransLearner</span>
+<span class="kn">from</span> <span class="nn">fasthugs.data</span> <span class="kn">import</span> <span class="n">TransformersTextBlock</span><span class="p">,</span> <span class="n">TextGetter</span><span class="p">,</span> <span class="n">get_splits</span>
+
+<span class="kn">from</span> <span class="nn">datasets</span> <span class="kn">import</span> <span class="n">load_dataset</span><span class="p">,</span> <span class="n">concatenate_datasets</span>
+
+<span class="kn">import</span> <span class="nn">wandb</span>
+<span class="kn">import</span> <span class="nn">gc</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction"> </a></h2><p>In this blogpost will look at how to conbine the power of HuggingFace with great flexibility of fastai. For this purpose we will look at finetuning on <a href="https://gluebenchmark.com/">GLUE benchmark</a> tasks. Fun fact: it was introduced in this <a href="https://arxiv.org/abs/1804.07461">paper</a> 2018 as tough to beat benchmark to chellange NLP systems and in just about a year new <a href="https://arxiv.org/abs/1911.11763">SuperGLUE</a> benchmark was introduced because original GLUE has become too easy for the models.</p>
+<p>To give you a grasp on what are we dealing with, here is a brief summary of GLUE tasks:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Task description</th>
+      <th>Size</th>
+      <th>Metrics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>cola</th>
+      <td>Corpus of Linguistic Acceptability</td>
+      <td>Determine whether it is a grammatical sentence</td>
+      <td>8.5k</td>
+      <td>matthews_corrcoef</td>
+    </tr>
+    <tr>
+      <th>sst2</th>
+      <td>Stanford Sentiment Treebank</td>
+      <td>Predict the sentiment of a givensentence</td>
+      <td>67k</td>
+      <td>accuracy</td>
+    </tr>
+    <tr>
+      <th>mrpc</th>
+      <td>Microsoft Research Paraphrase Corpus</td>
+      <td>Determine whether the sentences in the pair are semantically equivalent</td>
+      <td>3.7k</td>
+      <td>f1/accuracy</td>
+    </tr>
+    <tr>
+      <th>stsb</th>
+      <td>Semantic Textual Similarity Benchmark</td>
+      <td>Determine similarity score for 2 sentences</td>
+      <td>7k</td>
+      <td>pearsonr/spearmanr</td>
+    </tr>
+    <tr>
+      <th>qqp</th>
+      <td>Quora question pair</td>
+      <td>Determine if 2 questions are the same (paraphrase)</td>
+      <td>364k</td>
+      <td>f1/accuracy</td>
+    </tr>
+    <tr>
+      <th>mnli</th>
+      <td>Mulit-Genre Natural Language Inference</td>
+      <td>Predict whether the premise entails, contradicts or is neutral to the hypothesis</td>
+      <td>393k</td>
+      <td>accuracy</td>
+    </tr>
+    <tr>
+      <th>qnli</th>
+      <td>Stanford Question Answering Dataset</td>
+      <td>Determine whether the context sentence containsthe answer to the question</td>
+      <td>105k</td>
+      <td>accuracy</td>
+    </tr>
+    <tr>
+      <th>rte</th>
+      <td>Recognize Textual Entailment</td>
+      <td>Determine whether one sentece entails another</td>
+      <td>2.5k</td>
+      <td>accuracy</td>
+    </tr>
+    <tr>
+      <th>wnli</th>
+      <td>Winograd Schema Challenge</td>
+      <td>Predict if the sentence with the pronoun substituted is entailed by the original sentence</td>
+      <td>634</td>
+      <td>accuracy</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As you can see some datasets are really small here. And we'll look at how one can adress.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's define main settings for the run in one place:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ds_name</span> <span class="o">=</span> <span class="s1">&#39;glue&#39;</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;distilroberta-base&quot;</span>
+
+<span class="n">max_len</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">bs</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">val_bs</span> <span class="o">=</span> <span class="n">bs</span><span class="o">*</span><span class="mi">2</span>
+
+<span class="n">n_epoch</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">lr</span> <span class="o">=</span> <span class="mf">2e-5</span>
+<span class="n">wd</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">opt_func</span> <span class="o">=</span> <span class="n">Adam</span>
+<span class="n">diff_lr_decay_factor</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To make switching between datasets smooth I'll define couple of dictionaries containing per-task information. We'll need metrics, text fields to retrieve data and number of outputs for the model.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">])</span> <span class="k">for</span> <span class="n">ms</span> <span class="ow">in</span> <span class="n">glue_metrics</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[&#39;matthews_corrcoef&#39;,
+ &#39;accuracy&#39;,
+ &#39;f1_score/accuracy&#39;,
+ &#39;pearsonr/spearmanr&#39;,
+ &#39;f1_score/accuracy&#39;,
+ &#39;accuracy&#39;,
+ &#39;accuracy&#39;,
+ &#39;accuracy&#39;,
+ &#39;accuracy&#39;]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">GLUE_TASKS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cola&quot;</span><span class="p">,</span> <span class="s2">&quot;mnli&quot;</span><span class="p">,</span> <span class="s2">&quot;mrpc&quot;</span><span class="p">,</span> <span class="s2">&quot;qnli&quot;</span><span class="p">,</span> <span class="s2">&quot;qqp&quot;</span><span class="p">,</span> <span class="s2">&quot;rte&quot;</span><span class="p">,</span> <span class="s2">&quot;sst2&quot;</span><span class="p">,</span> <span class="s2">&quot;stsb&quot;</span><span class="p">,</span> <span class="s2">&quot;wnli&quot;</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">validate_task</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">GLUE_TASKS</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">glue_metrics</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cola&#39;</span><span class="p">:[</span><span class="n">MatthewsCorrCoef</span><span class="p">()],</span>
+    <span class="s1">&#39;sst2&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;mrpc&#39;</span><span class="p">:[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;stsb&#39;</span><span class="p">:[</span><span class="n">PearsonCorrCoef</span><span class="p">(),</span> <span class="n">SpearmanCorrCoef</span><span class="p">()],</span>
+    <span class="s1">&#39;qqp&#39;</span> <span class="p">:[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;mnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;qnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;rte&#39;</span> <span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">&#39;wnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">glue_textfields</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cola&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="s1">&#39;sst2&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="s1">&#39;mrpc&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;stsb&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;qqp&#39;</span> <span class="p">:[</span><span class="s1">&#39;question1&#39;</span><span class="p">,</span> <span class="s1">&#39;question2&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;mnli&#39;</span><span class="p">:[</span><span class="s1">&#39;premise&#39;</span><span class="p">,</span> <span class="s1">&#39;hypothesis&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;qnli&#39;</span><span class="p">:[</span><span class="s1">&#39;question&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;rte&#39;</span> <span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;wnli&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">glue_num_labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mnli&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;stsb&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">layerwise_splitter</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">emb</span> <span class="o">=</span> <span class="n">L</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">base_model</span><span class="o">.</span><span class="n">embeddings</span><span class="p">)</span>
+    <span class="n">layers</span> <span class="o">=</span> <span class="n">L</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">base_model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">children</span><span class="p">())</span>
+    <span class="n">clf</span> <span class="o">=</span> <span class="n">L</span><span class="p">(</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">children</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">params</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">emb</span> <span class="o">+</span> <span class="n">layers</span> <span class="o">+</span> <span class="n">clf</span>
+    <span class="k">return</span> <span class="n">groups</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Running-a-GLUE-task">Running a GLUE task<a class="anchor-link" href="#Running-a-GLUE-task"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;sst2&#39;</span>
+<span class="n">validate_task</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Reusing dataset glue (/root/.cache/huggingface/datasets/glue/sst2/1.0.0/dacbe3125aa31d7f70367a07a8a9e72a5a0bfeb5fc42e75c9db75b96da6053ad)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_</span> <span class="o">=</span> <span class="s1">&#39;validation-matched&#39;</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;mnli&#39;</span> <span class="k">else</span> <span class="s1">&#39;validation&#39;</span>
+<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(67349, 872)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">valid_</span><span class="p">)</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{&#39;idx&#39;: 0,
+ &#39;label&#39;: 0,
+ &#39;sentence&#39;: &#39;hide new secretions from the parental units &#39;}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here I use number of characters a proxy for length of tokenized text to speed up <code>dls</code> creation.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;len&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="p">])},</span>
+                    <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span> <span class="n">CategoryBlock</span><span class="p">()],</span>
+                   <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
+<span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;res&#39;</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;val_res&#39;</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
+<span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">,</span> <span class="n">dl_kwargs</span><span class="o">=</span><span class="n">dl_kwargs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 16.9 s, sys: 992 ms, total: 17.9 s
+Wall time: 17.8 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>text</th>
+      <th>category</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>... spiced with humor ('i speak fluent flatula,'advises denlopp after a rather, er, bubbly exchange with an alien deckhand ) and witty updatings ( silver's parrot has been replaced with morph, a cute alien creature who mimics everyone and everything around )</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>stopped thinking about how good it all was, and started doing nothing but reacting to it - feeling a part of its grand locations, thinking urgently as the protagonists struggled, feeling at the mercy of its inventiveness, gasping at its visual delights.</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ozpetek offers an aids subtext, skims over the realities of gay sex, and presents yet another tired old vision of the gay community as an all-inclusive world where uptight, middle class bores like antonia can feel good about themselves.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>'s... worth the extra effort to see an artist, still committed to growth in his ninth decade, change while remaining true to his principles with a film whose very subject is, quite pointedly, about the peril of such efforts.</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Single-run">Single run<a class="anchor-link" href="#Single-run"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;fasthugs&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+           <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+<span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">,</span> <span class="n">splitter</span><span class="o">=</span><span class="n">layerwise_splitter</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="n">diff_lr_decay_factor</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">layerwise_splitter</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">lr</span><span class="o">*</span><span class="n">diff_lr_decay_factor</span><span class="o">**</span><span class="n">k</span><span class="p">,</span><span class="n">lr</span><span class="p">)</span>
+
+<span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Could not gather input dimensions
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0.234400</td>
+      <td>0.234248</td>
+      <td>0.915138</td>
+      <td>03:09</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0.173527</td>
+      <td>0.247280</td>
+      <td>0.917431</td>
+      <td>03:11</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.097726</td>
+      <td>0.246916</td>
+      <td>0.924312</td>
+      <td>03:10</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.078707</td>
+      <td>0.263630</td>
+      <td>0.925459</td>
+      <td>03:11</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Better model found at epoch 0 with accuracy value: 0.9151375889778137.
+Better model found at epoch 1 with accuracy value: 0.9174311757087708.
+Better model found at epoch 2 with accuracy value: 0.9243119359016418.
+Better model found at epoch 3 with accuracy value: 0.9254587292671204.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">show_results</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>text</th>
+      <th>category</th>
+      <th>category_</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>the movie has an infectious exuberance that will engage anyone with a passing interest in the skate/surf culture, the l.a. beach scene and the imaginative ( and sometimes illegal ) ways kids can make a playground out of the refuse of adults.</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>what really makes it special is that it pulls us into its world, gives us a hero whose suffering and triumphs we can share, surrounds him with interesting characters and sends us out of the theater feeling we've shared a great adventure.</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>this is a train wreck of an action film -- a stupefying attempt by the filmmakers to force-feed james bond into the mindless xxx mold and throw 40 years of cinematic history down the toilet in favor of bright flashes and loud bangs.</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>it's one of those baseball pictures where the hero is stoic, the wife is patient, the kids are as cute as all get-out and the odds against success are long enough to intimidate, but short enough to make a dream seem possible.</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>though perry and hurley make inspiring efforts to breathe life into the disjointed, haphazard script by jay scherick and david ronn, neither the actors nor director reginald hudlin can make it more than fitfully entertaining.</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>may be far from the best of the series, but it's assured, wonderfully respectful of its past and thrilling enough to make it abundantly clear that this movie phenomenon has once again reinvented itself for a new generation.</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>despite all evidence to the contrary, this clunker has somehow managed to pose as an actual feature movie, the kind that charges full admission and gets hyped on tv and purports to amuse small children and ostensible adults.</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>it's inoffensive, cheerful, built to inspire the young people, set to an unending soundtrack of beach party pop numbers and aside from its remarkable camerawork and awesome scenery, it's about as exciting as a sunburn.</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>but the power of these ( subjects ) is obscured by the majority of the film that shows a stationary camera on a subject that could be mistaken for giving a public oration, rather than contributing to a film's narrative.</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Sweeps">Sweeps<a class="anchor-link" href="#Sweeps"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finding the perfect learning rate for a task isn't easy. Add weight decay, different optimizers, differential learning rates and various scheduler to the mix and search for best hyperparameters becomes a really big task. For that reason there exist automated tools for hyperparameter search. Here we'll look at <code>sweep</code>s functionality provided by W&amp;B.
+It not only facilitates hyperparameter finetuning but also enables great visualization of the results, which might help for further analysis.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Failed to query for notebook name, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable
+<span class="ansi-blue-intense-fg ansi-bold">wandb</span>: Currently logged in as: <span class="ansi-yellow-fg">fastai_community</span> (use `wandb login --relogin` to force relogin)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>True</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">train</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">()</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">config</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">layerwise_splitter</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">lr</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="o">*</span><span class="n">cfg</span><span class="o">.</span><span class="n">diff_lr_decay_factor</span><span class="o">**</span><span class="n">k</span><span class="p">,</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>
+        <span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">Adam</span><span class="p">,</span> <span class="n">splitter</span><span class="o">=</span><span class="n">layerwise_splitter</span><span class="p">)</span>
+        <span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="n">n_epoch</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">)])</span>
+        <span class="k">del</span> <span class="n">learn</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+<span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">sweep_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;glue-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">-sweep&quot;</span>
+<span class="n">sweep_config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">sweep_name</span><span class="p">,</span>
+  <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;random&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">2e-5</span><span class="p">,</span><span class="mf">3e-5</span><span class="p">,</span><span class="mf">5e-5</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">3e-4</span><span class="p">]},</span>
+        <span class="s2">&quot;wd&quot;</span><span class="p">:{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">5e-2</span><span class="p">]},</span>
+        <span class="s2">&quot;diff_lr_decay_factor&quot;</span><span class="p">:{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]}</span>
+    <span class="p">},</span>
+  <span class="s2">&quot;metric&quot;</span><span class="p">:{</span><span class="s2">&quot;goal&quot;</span><span class="p">:</span> <span class="s2">&quot;maximise&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">metric_to_monitor</span><span class="p">},</span>
+  <span class="s2">&quot;early_terminate&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;hyperband&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">40</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sweep_id</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">sweep</span><span class="p">(</span><span class="n">sweep_config</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">&#39;glue-benchmark&#39;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Create sweep with ID: dwio5fl2
+Sweep URL: https://wandb.ai/fastai_community/uncategorized/sweeps/dwio5fl2
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">agent</span><span class="p">(</span><span class="n">sweep_id</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="n">train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Another-task-example:-MultiNLI">Another task example: MultiNLI<a class="anchor-link" href="#Another-task-example:-MultiNLI"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;mnli&#39;</span>
+<span class="n">validate_task</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Reusing dataset glue (/root/.cache/huggingface/datasets/glue/mnli/1.0.0/dacbe3125aa31d7f70367a07a8a9e72a5a0bfeb5fc42e75c9db75b96da6053ad)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="s1">&#39;validation_matched&#39;</span><span class="p">)</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;validation_matched&#39;</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{&#39;hypothesis&#39;: &#39;Product and geography are what make cream skimming work. &#39;,
+ &#39;idx&#39;: 0,
+ &#39;label&#39;: 1,
+ &#39;premise&#39;: &#39;Conceptually cream skimming has two basic dimensions - product and geography.&#39;}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;len&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;premise&#39;</span><span class="p">])</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;hypothesis&#39;</span><span class="p">])},</span> <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+
+
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
+                             <span class="n">CategoryBlock</span><span class="p">()],</span>
+                   <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
+<span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;res&#39;</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;val_res&#39;</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
+<span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">,</span> <span class="n">dl_kwargs</span><span class="o">=</span><span class="n">dl_kwargs</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 1min 55s, sys: 2.15 s, total: 1min 57s
+Wall time: 1min 57s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>text</th>
+      <th>text_</th>
+      <th>category</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>well uh that's kind of obvious i mean they're even carrying it to to where now uh that they advertise on TV you know if your if you uh you know have done this or if you need this uh uh we'll sue for you and you don't have to pay us unless you but then what they don't tell you is that if you if they win you give them at least a third of the of the thing that they win so  i don't know it is uh it's getting to be more business now rather than uh actually uh dealing with the crime than with uh um the uh punishment they the the lawyers are just in it for the money  i'm i'm convinced i know i i agree with you i think you're real you're very right that the politicians should i think they</td>
+      <td>I think that there should be an equal representation of backgrounds in our politicians.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>that's funny yeah and that is a good short term thing though that little things like that that overall though i just think we're just going to i don't know see i know i guess i'm kind of leery of this topic because i know that Bush is real for the new world order the one world government and alleviating all you know national debt between all of the nations but i see that to be a potential power problem later with um who's going to be in charge with this new world order and i you know i'm uncomfortable with that much power being in one place but i know we already have a new money system we already have new bills printed for the US Treasury already has our new bills printed for new currency and i mean i've seen them and so i know that the long-term</td>
+      <td>I hope all power is concentrated into one country.</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>that's right um  we were down in Dallas right after Christmas and on the way back we stopped in Louisiana to visit my brother and we were driving my husband's Toyota pick up truck well we made a quick little stop when we got to Baton Rouge and he came came back out and the car the truck wouldn't stop i mean it wouldn't start so gave it a somebody came along and helped give it a little push and the next morning they took it to the garage and it was just a small private garage and he said it was the starter motor proba bly and he was going to take it off and either repair it or replace it or whatever and we got a call in the middle of the morning and he said i've got good news and bad news uh the starter motor</td>
+      <td>He said the starter motor was probably fine and that it must be something else.</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>not really yeah really well that's pretty wild we yeah we used it for fleas we had fleas in our yard real bad last year and we did that um i just i'm not basically i like to mow the lawn believe it or not but i sometimes have problems starting the mower so a lot of times i don't get out and do it but my husband basically does most of it and he does the you know edging and all that kind of thing and we're renting and so we don't really put a lot of money into the uh you know this like this lawn could probably stand a couple of loads of dirt and some Saint Augustine we just we have winter rye out back and we have i don't even know what it is out front but um we this is the first house we've</td>
+      <td>We don't worry much about the lawn because we rent.</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Tracking-with-W&amp;B">Tracking with W&amp;B<a class="anchor-link" href="#Tracking-with-W&amp;B"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with Adam lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="s1">&#39;adam&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;glue-benchmark&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+           <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Training">Training<a class="anchor-link" href="#Training"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+<span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Could not gather input dimensions
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+        <style>
+            /* Turns off some styling */
+            progress {
+                /* gets rid of default border in Firefox and Opera. */
+                border: none;
+                /* Needs to be in here for Safari polyfill so background images work as expected. */
+                background-size: auto;
+            }
+            .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+                background: #F44336;
+            }
+        </style>
+      <progress value="0" class="" max="8" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      0.00% [0/8 00:00&lt;00:00]
+    </div>
+    
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+
+    <div>
+        <style>
+            /* Turns off some styling */
+            progress {
+                /* gets rid of default border in Firefox and Opera. */
+                border: none;
+                /* Needs to be in here for Safari polyfill so background images work as expected. */
+                background-size: auto;
+            }
+            .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+                background: #F44336;
+            }
+        </style>
+      <progress value="1992" class="" max="12271" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      16.23% [1992/12271 04:53&lt;25:16 0.9426]
+    </div>
+    
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">show_results</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_mm_dl</span> <span class="o">=</span> <span class="n">dls</span><span class="o">.</span><span class="n">test_dl</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;validation_mismatched&#39;</span><span class="p">],</span> <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">dl</span><span class="o">=</span><span class="n">valid_mm_dl</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Low-resource-tasks">Low resource tasks<a class="anchor-link" href="#Low-resource-tasks"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Notice that <code>rte</code> task has only 2.5k samples in the training set. This is not much at all for untrivial language task like this one. But we can try to use a small trick for that. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> whe reporting GLUE score.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;rte&#39;</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+
+<span class="n">valid_</span> <span class="o">=</span> <span class="s1">&#39;validation-matched&#39;</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;mnli&#39;</span> <span class="k">else</span> <span class="s1">&#39;validation&#39;</span>
+<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
+
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">valid_</span><span class="p">)</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Reusing dataset glue (/root/.cache/huggingface/datasets/glue/rte/1.0.0/dacbe3125aa31d7f70367a07a8a9e72a5a0bfeb5fc42e75c9db75b96da6053ad)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{&#39;idx&#39;: 0,
+ &#39;label&#39;: 1,
+ &#39;sentence1&#39;: &#39;No Weapons of Mass Destruction Found in Iraq Yet.&#39;,
+ &#39;sentence2&#39;: &#39;Weapons of Mass Destruction Found in Iraq.&#39;}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span> <span class="n">CategoryBlock</span><span class="p">()],</span>
+                   <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>text</th>
+      <th>text_</th>
+      <th>category</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>No Weapons of Mass Destruction Found in Iraq Yet.</td>
+      <td>Weapons of Mass Destruction Found in Iraq.</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>The most recent poll carried out by NOP market research in January revealed that 61% of Britons are opposed to joining the euro.</td>
+      <td>The introduction of the euro has been opposed.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>The disappearance of York University chef Claudia Lawrence is now being treated as suspected murder, North Yorkshire Police said. However detectives said they had not found any proof that the 35-year-old, who went missing on 18 March, was dead. Her father Peter Lawrence made a direct appeal to his daughter to contact him five weeks after she disappeared. His plea came at a news conference held shortly after a £10,000 reward was offered to help find Miss Lawrence. Crimestoppers said the sum they were offering was "significantly higher" than usual because of public interest in the case.</td>
+      <td>Claudia Lawrence is 35 years old.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>A Continental Connection flight from Newark to Buffalo crashed into a house about four to six miles from Buffalo Niagara International Airport on Thursday night, killing 50 people, officials said. Continental Airlines Flight 3407 is a daily commuter flight from Newark Liberty International Airport in Newark, New Jersey to Buffalo, New York, operated under the Continental Connection brand by Virginia-based regional airline Colgan Air.</td>
+      <td>A daily commuter flight crashed in New York.</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;fasthugs&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+           <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+<span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">learn</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;distilroberta-base-mnli&#39;</span><span class="p">,</span> <span class="n">with_opt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Error(s) in loading state_dict for RobertaForSequenceClassification:
+	size mismatch for classifier.out_proj.weight: copying a param with shape torch.Size([3, 768]) from checkpoint, the shape in current model is torch.Size([2, 768]).
+	size mismatch for classifier.out_proj.bias: copying a param with shape torch.Size([3]) from checkpoint, the shape in current model is torch.Size([2]).
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="n">diff_lr_decay_factor</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">layerwise_splitter</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">lr</span><span class="o">*</span><span class="n">diff_lr_decay_factor</span><span class="o">**</span><span class="n">k</span><span class="p">,</span><span class="n">lr</span><span class="p">)</span>
+
+<span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">,</span> <span class="n">pct_start</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0.569979</td>
+      <td>0.565890</td>
+      <td>0.693141</td>
+      <td>00:30</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0.511280</td>
+      <td>0.529077</td>
+      <td>0.736462</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.409093</td>
+      <td>0.601690</td>
+      <td>0.743682</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.265996</td>
+      <td>0.763166</td>
+      <td>0.736462</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>0.171846</td>
+      <td>0.770063</td>
+      <td>0.754513</td>
+      <td>00:32</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>0.098103</td>
+      <td>0.922156</td>
+      <td>0.768953</td>
+      <td>00:32</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>0.067698</td>
+      <td>1.030401</td>
+      <td>0.761733</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>0.048222</td>
+      <td>1.007513</td>
+      <td>0.772563</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>0.034855</td>
+      <td>1.056370</td>
+      <td>0.765343</td>
+      <td>00:32</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>0.021131</td>
+      <td>1.069907</td>
+      <td>0.761733</td>
+      <td>00:32</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+<span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">,</span> <span class="n">pct_start</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Some weights of the model checkpoint at distilroberta-base were not used when initializing RobertaForSequenceClassification: [&#39;lm_head.bias&#39;, &#39;lm_head.dense.weight&#39;, &#39;lm_head.dense.bias&#39;, &#39;lm_head.layer_norm.weight&#39;, &#39;lm_head.layer_norm.bias&#39;, &#39;lm_head.decoder.weight&#39;, &#39;roberta.pooler.dense.weight&#39;, &#39;roberta.pooler.dense.bias&#39;]
+- This IS expected if you are initializing RobertaForSequenceClassification from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing RobertaForSequenceClassification from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+Some weights of RobertaForSequenceClassification were not initialized from the model checkpoint at distilroberta-base and are newly initialized: [&#39;classifier.dense.weight&#39;, &#39;classifier.dense.bias&#39;, &#39;classifier.out_proj.weight&#39;, &#39;classifier.out_proj.bias&#39;]
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0.695126</td>
+      <td>0.691306</td>
+      <td>0.527076</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0.692349</td>
+      <td>0.692152</td>
+      <td>0.480144</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.678994</td>
+      <td>0.641740</td>
+      <td>0.624549</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.602276</td>
+      <td>0.600447</td>
+      <td>0.671480</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>0.488653</td>
+      <td>0.662074</td>
+      <td>0.678700</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>0.377430</td>
+      <td>0.683057</td>
+      <td>0.678700</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>0.269494</td>
+      <td>0.967499</td>
+      <td>0.657040</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>0.182777</td>
+      <td>1.016970</td>
+      <td>0.685921</td>
+      <td>00:32</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>0.140067</td>
+      <td>1.038462</td>
+      <td>0.696751</td>
+      <td>00:31</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>0.113930</td>
+      <td>1.068865</td>
+      <td>0.682310</td>
+      <td>00:32</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The same holds for STSB taks, which has 7k training samples. You can compare the results for cold and warm starts in this report.</p>
+
+</div>
+</div>
+</div>
+&lt;/div&gt;
+ 
+
+<script type="application/vnd.jupyter.widget-state+json">
+{"c8b04627ae63433598e1346b6c09613c": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_69e9fbe38d2e4e8abbeaf6262e65e333", "IPY_MODEL_d958b6923449460789499f7ec7c1ab0f"], "layout": "IPY_MODEL_4b1851ebcbab4cc48ec7527a667b4046"}}, "4b1851ebcbab4cc48ec7527a667b4046": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "69e9fbe38d2e4e8abbeaf6262e65e333": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "Downloading: ", "description_tooltip": null, "layout": "IPY_MODEL_be6707782dca4d7e815e939f777287ca", "max": 7777, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_6222442ebccd43a3a39fd14ea6336328", "value": 7777}}, "d958b6923449460789499f7ec7c1ab0f": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_97fbbb5d5672468d9170bf32733fe7c6", "placeholder": "\u200b", "style": "IPY_MODEL_b337ad7000894d0dabdeecda29377605", "value": " 28.8k/? [00:04&lt;00:00, 6.38kB/s]"}}, "6222442ebccd43a3a39fd14ea6336328": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "be6707782dca4d7e815e939f777287ca": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "b337ad7000894d0dabdeecda29377605": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "97fbbb5d5672468d9170bf32733fe7c6": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "594d57e21fa04b8d9666f2cb2ceb5ae5": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_a2f2ba8f10b44ccd936ef7edabf446dc", "IPY_MODEL_0663d583f2f340559b5dac50bfccff74"], "layout": "IPY_MODEL_e92368ffcd6a4861ba3c51939e83728e"}}, "e92368ffcd6a4861ba3c51939e83728e": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "a2f2ba8f10b44ccd936ef7edabf446dc": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "Downloading: ", "description_tooltip": null, "layout": "IPY_MODEL_4d8c0c9dd2a44b739c6c9eecb29d7f0c", "max": 4473, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_eccf8ed54eef4328bd8cba924bdaafb1", "value": 4473}}, "0663d583f2f340559b5dac50bfccff74": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_6c1cf3992bb34633b6afeb4ff8c5975c", "placeholder": "\u200b", "style": "IPY_MODEL_01d8aebe7fc343d3bcd0e646901e3090", "value": " 28.7k/? [00:00&lt;00:00, 262kB/s]"}}, "eccf8ed54eef4328bd8cba924bdaafb1": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "4d8c0c9dd2a44b739c6c9eecb29d7f0c": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "01d8aebe7fc343d3bcd0e646901e3090": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "6c1cf3992bb34633b6afeb4ff8c5975c": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "53ac3ba792114dbe971a94dbf34c69a1": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_07ba16cc457d485494b7d41595883a6a", "IPY_MODEL_b6b92bd84d484781b18dd37d57ec7b40"], "layout": "IPY_MODEL_98a04a1876ed4ad0a2b5cd9d01b55c44"}}, "98a04a1876ed4ad0a2b5cd9d01b55c44": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "07ba16cc457d485494b7d41595883a6a": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "Downloading: 100%", "description_tooltip": null, "layout": "IPY_MODEL_5ee1c7833a4849afaa97f0308deb1643", "max": 7439277, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_eec9faa3af2e49e0a9bf9bcd1caaac4c", "value": 7439277}}, "b6b92bd84d484781b18dd37d57ec7b40": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_0b1d783166a444bda2a978b8e14d7f64", "placeholder": "\u200b", "style": "IPY_MODEL_954afc54c73c41739ff978fae4c21b98", "value": " 7.44M/7.44M [00:03&lt;00:00, 2.23MB/s]"}}, "eec9faa3af2e49e0a9bf9bcd1caaac4c": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "5ee1c7833a4849afaa97f0308deb1643": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "954afc54c73c41739ff978fae4c21b98": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "0b1d783166a444bda2a978b8e14d7f64": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "fb28b9902b81477381cd39c8eed97c6f": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_b193f9d4f6504dc2b78cd733168272f6", "IPY_MODEL_3113b6bd9d0d460b80f94ed808970747"], "layout": "IPY_MODEL_3a47d6406b9d4bf289d86263cc7eeb2e"}}, "3a47d6406b9d4bf289d86263cc7eeb2e": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "b193f9d4f6504dc2b78cd733168272f6": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "info", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_64a3d53c61eb4898aa65ed0b2802211d", "max": 1, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_cfe635fe553b46569f814e7204b7ec81", "value": 1}}, "3113b6bd9d0d460b80f94ed808970747": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_598a80ade02c446aad2ca3cef394b14e", "placeholder": "\u200b", "style": "IPY_MODEL_0b25a3f7d59a4f3297a4d4134271536d", "value": " 67349/0 [00:01&lt;00:00, 41508.10 examples/s]"}}, "cfe635fe553b46569f814e7204b7ec81": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "64a3d53c61eb4898aa65ed0b2802211d": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "0b25a3f7d59a4f3297a4d4134271536d": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "598a80ade02c446aad2ca3cef394b14e": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "70b38afdaf6549ae8e790df7768d57ba": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_2bce6c069950415d90706b43a9f0fb5d", "IPY_MODEL_63aa5e3e4a7441729a93909f0ce09e5d"], "layout": "IPY_MODEL_1801cba816cd4b1f8ffa205c249d1760"}}, "1801cba816cd4b1f8ffa205c249d1760": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "2bce6c069950415d90706b43a9f0fb5d": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "info", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_6e13df3becbf4ed9aade38e77032e0f1", "max": 1, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_aadcbad1a46d424f9a651bb31598bb10", "value": 1}}, "63aa5e3e4a7441729a93909f0ce09e5d": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_f42c296e3b754c358cd0ec76955f22a9", "placeholder": "\u200b", "style": "IPY_MODEL_55f58b3a647a49d69d151e9aaae45405", "value": " 872/0 [00:00&lt;00:00, 10787.11 examples/s]"}}, "aadcbad1a46d424f9a651bb31598bb10": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "6e13df3becbf4ed9aade38e77032e0f1": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "55f58b3a647a49d69d151e9aaae45405": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "f42c296e3b754c358cd0ec76955f22a9": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "60c82d0663014a0ca53be19196692213": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_db231ba85d7842929df3bbbc031ca84c", "IPY_MODEL_107255a71c4542b88b096b7542dc1ee6"], "layout": "IPY_MODEL_c2e874ec40e647a8be079d5c4c783cbb"}}, "c2e874ec40e647a8be079d5c4c783cbb": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "db231ba85d7842929df3bbbc031ca84c": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "info", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_7f0716a9753e4682810059a77b598309", "max": 1, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_06e3ae1af1334fbb96ccf527ab88c65b", "value": 1}}, "107255a71c4542b88b096b7542dc1ee6": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_80f8aaff697848fd90ca4b4e423895de", "placeholder": "\u200b", "style": "IPY_MODEL_e549445ccc3044b78c7ef0fd08e19b4d", "value": " 1821/0 [00:00&lt;00:00, 17057.49 examples/s]"}}, "06e3ae1af1334fbb96ccf527ab88c65b": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "7f0716a9753e4682810059a77b598309": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "e549445ccc3044b78c7ef0fd08e19b4d": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "80f8aaff697848fd90ca4b4e423895de": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "5852291e134949609f1522503b45205d": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_7e6487bc5a6544e0944be2beb010ba04", "IPY_MODEL_1f59dc31d2fd45cd8bfdc6d3f38ebfb4"], "layout": "IPY_MODEL_0fa01ff7fe3d432d8afa6806e53196df"}}, "0fa01ff7fe3d432d8afa6806e53196df": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "7e6487bc5a6544e0944be2beb010ba04": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "#0: 100%", "description_tooltip": null, "layout": "IPY_MODEL_f726ec197e184e948d40ea14e0ba41c3", "max": 34111, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_cb4ef3b18bff4486b8871997654ec852", "value": 34111}}, "1f59dc31d2fd45cd8bfdc6d3f38ebfb4": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_d508a1d47d304ed8821e38038e06cc72", "placeholder": "\u200b", "style": "IPY_MODEL_0eed7e356218453795d79bd17b31d21b", "value": " 34111/34111 [00:06&lt;00:00, 4909.52ex/s]"}}, "cb4ef3b18bff4486b8871997654ec852": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "f726ec197e184e948d40ea14e0ba41c3": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "0eed7e356218453795d79bd17b31d21b": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "d508a1d47d304ed8821e38038e06cc72": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "d7715ffd7e424886a431dd79b3c8ba31": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_c90fde3947574cfabea146e198977ddc", "IPY_MODEL_c05a677847ba423caa8e23a655949308"], "layout": "IPY_MODEL_89155e81544d4e49ba737cba6f9b4f99"}}, "89155e81544d4e49ba737cba6f9b4f99": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "c90fde3947574cfabea146e198977ddc": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "#1: 100%", "description_tooltip": null, "layout": "IPY_MODEL_091e08fa4b8d43cca0cfce9bcc9a6f67", "max": 34110, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_99ab02879ee64d60a4c3b63c8b183eb8", "value": 34110}}, "c05a677847ba423caa8e23a655949308": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_8cae5a2e066d4a34b837a94958a14187", "placeholder": "\u200b", "style": "IPY_MODEL_e91a2643019e43f89fa414a5ae21c517", "value": " 34110/34110 [00:07&lt;00:00, 4803.13ex/s]"}}, "99ab02879ee64d60a4c3b63c8b183eb8": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "091e08fa4b8d43cca0cfce9bcc9a6f67": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "e91a2643019e43f89fa414a5ae21c517": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "8cae5a2e066d4a34b837a94958a14187": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}}
+</script>
+
+</p></div></div></div></div></div></div>
+
+
+  </div><a class="u-url" href="/thoughtsamples/2021/05/07/glue_benchmark.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/thoughtsamples/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/thoughtsamples/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/thoughtsamples/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>trying to sample non-random stuff from my neural net</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/arampacha" title="arampacha"><svg class="svg-icon grey"><use xlink:href="/thoughtsamples/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
