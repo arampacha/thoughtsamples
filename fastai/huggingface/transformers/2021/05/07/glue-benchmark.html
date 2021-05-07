@@ -7,16 +7,17 @@
 <title>Finetuning Transformers on GLUE benchmark | thoughtsamples</title>
 <meta name="generator" content="Jekyll v4.1.1" />
 <meta property="og:title" content="Finetuning Transformers on GLUE benchmark" />
+<meta name="author" content="Arto" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="trying to sample non-random stuff from my neural net" />
 <meta property="og:description" content="trying to sample non-random stuff from my neural net" />
-<link rel="canonical" href="https://arampacha.github.io/thoughtsamples/2021/05/07/glue-benchmark.html" />
-<meta property="og:url" content="https://arampacha.github.io/thoughtsamples/2021/05/07/glue-benchmark.html" />
+<link rel="canonical" href="https://arampacha.github.io/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html" />
+<meta property="og:url" content="https://arampacha.github.io/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html" />
 <meta property="og:site_name" content="thoughtsamples" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-05-07T00:00:00-05:00" />
 <script type="application/ld+json">
-{"url":"https://arampacha.github.io/thoughtsamples/2021/05/07/glue-benchmark.html","@type":"BlogPosting","headline":"Finetuning Transformers on GLUE benchmark","dateModified":"2021-05-07T00:00:00-05:00","datePublished":"2021-05-07T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://arampacha.github.io/thoughtsamples/2021/05/07/glue-benchmark.html"},"description":"trying to sample non-random stuff from my neural net","@context":"https://schema.org"}</script>
+{"url":"https://arampacha.github.io/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html","@type":"BlogPosting","headline":"Finetuning Transformers on GLUE benchmark","dateModified":"2021-05-07T00:00:00-05:00","datePublished":"2021-05-07T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://arampacha.github.io/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html"},"author":{"@type":"Person","name":"Arto"},"description":"trying to sample non-random stuff from my neural net","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/thoughtsamples/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://arampacha.github.io/thoughtsamples/feed.xml" title="thoughtsamples" /><link rel="shortcut icon" type="image/x-icon" href="/thoughtsamples/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
@@ -89,7 +90,9 @@ window.onload = wrap_img;
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">Finetuning Transformers on GLUE benchmark</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-05-07T00:00:00-05:00" itemprop="datePublished">
         May 7, 2021
-      </time>
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">Arto</span></span>
        • <span class="read-time" title="Estimated read time">
     
     
@@ -97,6 +100,19 @@ window.onload = wrap_img;
     
 </span></p>
 
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/thoughtsamples/categories/#fastai">fastai</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/thoughtsamples/categories/#huggingface">huggingface</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/thoughtsamples/categories/#transformers">transformers</a>
+        
+      
+      </p>
     
 
     
@@ -119,7 +135,19 @@ window.onload = wrap_img;
       </header>
 
   <div class="post-content e-content" itemprop="articleBody">
-    <!--
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Introduction">Introduction </a></li>
+<li class="toc-entry toc-h2"><a href="#Setup">Setup </a></li>
+<li class="toc-entry toc-h2"><a href="#Running-a-GLUE-task">Running a GLUE task </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Single-run">Single run </a></li>
+<li class="toc-entry toc-h3"><a href="#Sweeps">Sweeps </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Another-task-example:-MultiNLI">Another task example: MultiNLI </a></li>
+<li class="toc-entry toc-h2"><a href="#Low-resource-tasks">Low resource tasks </a></li>
+<li class="toc-entry toc-h2"><a href="#Concluding-thoughts">Concluding thoughts </a></li>
+</ul><!--
 #################################################
 ### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
 #################################################
@@ -133,7 +161,8 @@ window.onload = wrap_img;
 <div class="cell border-box-sizing code_cell rendered">
 <details class="description">
       <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
-        <p><div class="input">
+        <p></p>
+<div class="input">
 
 <div class="inner_cell">
     <div class="input_area">
@@ -153,15 +182,20 @@ window.onload = wrap_img;
     </div>
 </div>
 </div>
-</p>
+
     </details>
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction"> </a></h2><p>In this blogpost we will look at how to conbine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will be finetuning <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a> tasks. To make integration of HF models with fastai training loop smooth I'm using lightweight wrapper library <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a>. It is currently under development and we'll be inroducing more features together with NLP related blogposts like this one.</p>
-<blockquote><p>Fun fact:it was introduced in this <a href="https://arxiv.org/abs/1804.07461">paper</a> in 2018 as tough to beat benchmark to chellange NLP systems and in just about a year new <a href="https://arxiv.org/abs/1911.11763">SuperGLUE</a> benchmark was introduced because original GLUE has become too easy for the models.
+<h2 id="Introduction">
+<a class="anchor" href="#Introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction<a class="anchor-link" href="#Introduction"> </a>
+</h2>
+<p>In this blogpost we will look at how to conbine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will be finetuning <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a> tasks. To make integration of HF models with fastai training loop smooth I'm using lightweight wrapper library <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a>. It is currently under development and we'll be inroducing more features together with NLP related blogposts like this one.</p>
+<blockquote>
+<p>Fun fact:GLUE benchmark was introduced in this <a href="https://arxiv.org/abs/1804.07461">paper</a> in 2018 as tough to beat benchmark to chellange NLP systems and in just about a year new <a href="https://arxiv.org/abs/1911.11763">SuperGLUE</a> benchmark was introduced because original GLUE has become too easy for the models.
 To give you a grasp on what are we dealing with, here is a brief summary of GLUE tasks:</p>
 </blockquote>
 
@@ -265,20 +299,25 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>As you can see some datasets are really small here. And we'll look at how one can adress.</p>
 
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+<h2 id="Setup">
+<a class="anchor" href="#Setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setup<a class="anchor-link" href="#Setup"> </a>
+</h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's define main settings for the run in one place:</p>
 
@@ -292,8 +331,8 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ds_name</span> <span class="o">=</span> <span class="s1">&#39;glue&#39;</span>
-<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;distilroberta-base&quot;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ds_name</span> <span class="o">=</span> <span class="s1">'glue'</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">"distilroberta-base"</span>
 
 <span class="n">max_len</span> <span class="o">=</span> <span class="mi">512</span>
 <span class="n">bs</span> <span class="o">=</span> <span class="mi">32</span>
@@ -313,7 +352,8 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>To make switching between datasets smooth I'll define couple of dictionaries containing per-task information. We'll need metrics, text fields to retrieve data and number of outputs for the model.</p>
 
@@ -327,7 +367,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">GLUE_TASKS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cola&quot;</span><span class="p">,</span> <span class="s2">&quot;mnli&quot;</span><span class="p">,</span> <span class="s2">&quot;mrpc&quot;</span><span class="p">,</span> <span class="s2">&quot;qnli&quot;</span><span class="p">,</span> <span class="s2">&quot;qqp&quot;</span><span class="p">,</span> <span class="s2">&quot;rte&quot;</span><span class="p">,</span> <span class="s2">&quot;sst2&quot;</span><span class="p">,</span> <span class="s2">&quot;stsb&quot;</span><span class="p">,</span> <span class="s2">&quot;wnli&quot;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">GLUE_TASKS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"cola"</span><span class="p">,</span> <span class="s2">"mnli"</span><span class="p">,</span> <span class="s2">"mrpc"</span><span class="p">,</span> <span class="s2">"qnli"</span><span class="p">,</span> <span class="s2">"qqp"</span><span class="p">,</span> <span class="s2">"rte"</span><span class="p">,</span> <span class="s2">"sst2"</span><span class="p">,</span> <span class="s2">"stsb"</span><span class="p">,</span> <span class="s2">"wnli"</span><span class="p">]</span>
 <span class="k">def</span> <span class="nf">validate_task</span><span class="p">():</span>
     <span class="k">assert</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">GLUE_TASKS</span>
 </pre></div>
@@ -344,41 +384,42 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 <div class="cell border-box-sizing code_cell rendered">
 <details class="description">
       <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
-        <p><div class="input">
+        <p></p>
+<div class="input">
 
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">glue_metrics</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;cola&#39;</span><span class="p">:[</span><span class="n">MatthewsCorrCoef</span><span class="p">()],</span>
-    <span class="s1">&#39;sst2&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;mrpc&#39;</span><span class="p">:[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;stsb&#39;</span><span class="p">:[</span><span class="n">PearsonCorrCoef</span><span class="p">(),</span> <span class="n">SpearmanCorrCoef</span><span class="p">()],</span>
-    <span class="s1">&#39;qqp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;mnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;qnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;rte&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">accuracy</span><span class="p">],</span>
-    <span class="s1">&#39;wnli&#39;</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'cola'</span><span class="p">:[</span><span class="n">MatthewsCorrCoef</span><span class="p">()],</span>
+    <span class="s1">'sst2'</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'mrpc'</span><span class="p">:[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'stsb'</span><span class="p">:[</span><span class="n">PearsonCorrCoef</span><span class="p">(),</span> <span class="n">SpearmanCorrCoef</span><span class="p">()],</span>
+    <span class="s1">'qqp'</span><span class="p">:</span> <span class="p">[</span><span class="n">F1Score</span><span class="p">(),</span> <span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'mnli'</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'qnli'</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'rte'</span><span class="p">:</span> <span class="p">[</span><span class="n">accuracy</span><span class="p">],</span>
+    <span class="s1">'wnli'</span><span class="p">:[</span><span class="n">accuracy</span><span class="p">],</span>
 <span class="p">}</span>
 
 <span class="n">glue_textfields</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;cola&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-    <span class="s1">&#39;sst2&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-    <span class="s1">&#39;mrpc&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;stsb&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;qqp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;question1&#39;</span><span class="p">,</span> <span class="s1">&#39;question2&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;mnli&#39;</span><span class="p">:[</span><span class="s1">&#39;premise&#39;</span><span class="p">,</span> <span class="s1">&#39;hypothesis&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;qnli&#39;</span><span class="p">:[</span><span class="s1">&#39;question&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;rte&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;wnli&#39;</span><span class="p">:[</span><span class="s1">&#39;sentence1&#39;</span><span class="p">,</span> <span class="s1">&#39;sentence2&#39;</span><span class="p">],</span>
+    <span class="s1">'cola'</span><span class="p">:[</span><span class="s1">'sentence'</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="s1">'sst2'</span><span class="p">:[</span><span class="s1">'sentence'</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="s1">'mrpc'</span><span class="p">:[</span><span class="s1">'sentence1'</span><span class="p">,</span> <span class="s1">'sentence2'</span><span class="p">],</span>
+    <span class="s1">'stsb'</span><span class="p">:[</span><span class="s1">'sentence1'</span><span class="p">,</span> <span class="s1">'sentence2'</span><span class="p">],</span>
+    <span class="s1">'qqp'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'question1'</span><span class="p">,</span> <span class="s1">'question2'</span><span class="p">],</span>
+    <span class="s1">'mnli'</span><span class="p">:[</span><span class="s1">'premise'</span><span class="p">,</span> <span class="s1">'hypothesis'</span><span class="p">],</span>
+    <span class="s1">'qnli'</span><span class="p">:[</span><span class="s1">'question'</span><span class="p">,</span> <span class="s1">'sentence'</span><span class="p">],</span>
+    <span class="s1">'rte'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'sentence1'</span><span class="p">,</span> <span class="s1">'sentence2'</span><span class="p">],</span>
+    <span class="s1">'wnli'</span><span class="p">:[</span><span class="s1">'sentence1'</span><span class="p">,</span> <span class="s1">'sentence2'</span><span class="p">],</span>
 <span class="p">}</span>
 
-<span class="n">glue_num_labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mnli&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;stsb&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+<span class="n">glue_num_labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'mnli'</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="s1">'stsb'</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
 </pre></div>
 
     </div>
 </div>
 </div>
-</p>
+
     </details>
 </div>
     
@@ -388,7 +429,8 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 <div class="cell border-box-sizing code_cell rendered">
 <details class="description">
       <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
-        <p><div class="input">
+        <p></p>
+<div class="input">
 
 <div class="inner_cell">
     <div class="input_area">
@@ -403,14 +445,17 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
     </div>
 </div>
 </div>
-</p>
+
     </details>
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Running-a-GLUE-task">Running a GLUE task<a class="anchor-link" href="#Running-a-GLUE-task"> </a></h2>
+<h2 id="Running-a-GLUE-task">
+<a class="anchor" href="#Running-a-GLUE-task" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running a GLUE task<a class="anchor-link" href="#Running-a-GLUE-task"> </a>
+</h2>
 </div>
 </div>
 </div>
@@ -421,7 +466,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;sst2&#39;</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">'sst2'</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
 </pre></div>
 
@@ -439,8 +484,8 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_</span> <span class="o">=</span> <span class="s1">&#39;validation-matched&#39;</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;mnli&#39;</span> <span class="k">else</span> <span class="s1">&#39;validation&#39;</span>
-<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_</span> <span class="o">=</span> <span class="s1">'validation-matched'</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'mnli'</span> <span class="k">else</span> <span class="s1">'validation'</span>
+<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
 </pre></div>
 
     </div>
@@ -474,7 +519,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">valid_</span><span class="p">)</span>
-<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
 <span class="n">train_ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 
@@ -490,9 +535,9 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>{&#39;idx&#39;: 0,
- &#39;label&#39;: 0,
- &#39;sentence&#39;: &#39;hide new secretions from the parental units &#39;}</pre>
+<pre>{'idx': 0,
+ 'label': 0,
+ 'sentence': 'hide new secretions from the parental units '}</pre>
 </div>
 
 </div>
@@ -503,7 +548,8 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Here I use number of characters a proxy for length of tokenized text to speed up <code>dls</code> creation.</p>
 
@@ -517,10 +563,10 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;len&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="p">])},</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">'len'</span><span class="p">:</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="p">])},</span>
                     <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
-<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
+<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
 </pre></div>
 
     </div>
@@ -538,10 +584,10 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
-          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;stsb&#39;</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
+          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'stsb'</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
 <span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">blocks</span><span class="p">,</span>
                    <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
-                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">'label'</span><span class="p">),</span>
                    <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
 </pre></div>
 
@@ -559,7 +605,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;res&#39;</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;val_res&#39;</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">'res'</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">'val_res'</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
 <span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">,</span> <span class="n">dl_kwargs</span><span class="o">=</span><span class="n">dl_kwargs</span><span class="p">)</span>
 <span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
@@ -616,13 +662,17 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Single-run">Single run<a class="anchor-link" href="#Single-run"> </a></h3>
+<h3 id="Single-run">
+<a class="anchor" href="#Single-run" aria-hidden="true"><span class="octicon octicon-link"></span></a>Single run<a class="anchor-link" href="#Single-run"> </a>
+</h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>The GLUE benchmark contains 8 tasks and it might be cumbersome to systematize the results. To make the analysis simpler and much more powerful I will be using Weights&amp;Biases tracking platform.
 And even better thanks to Morgan McGuire (@morg) we have an open W&amp;B project. You just need to log your runs under <code>glue-benchmark</code> project and set <code>entity="fastai_community"</code> and your results will be added to the pull for further investigation of hyperparameters. The fastest way to start participating would be to fork this notebook as it is set up to run any of the GLUE tasks with minimal changes.
@@ -640,10 +690,10 @@ And even more interesting one how do this scale with dataset and model size?</p>
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">'</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
+<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
 <span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
 </pre></div>
 
@@ -661,7 +711,7 @@ And even more interesting one how do this scale with dataset and model size?</p>
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;glue-benchmark&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">"glue-benchmark"</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">"fastai_community"</span><span class="p">,</span>
            <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
 </pre></div>
 
@@ -679,7 +729,7 @@ And even more interesting one how do this scale with dataset and model size?</p>
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'task'</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
 <span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">,</span> <span class="n">splitter</span><span class="o">=</span><span class="n">layerwise_splitter</span><span class="p">)</span>
 </pre></div>
@@ -704,7 +754,7 @@ And even more interesting one how do this scale with dataset and model size?</p>
 
 <span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
 <span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">'</span><span class="p">)]</span>
 <span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">)</span>
 </pre></div>
 
@@ -895,13 +945,17 @@ Better model found at epoch 3 with accuracy value: 0.9254587292671204.
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Sweeps">Sweeps<a class="anchor-link" href="#Sweeps"> </a></h3>
+<h3 id="Sweeps">
+<a class="anchor" href="#Sweeps" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sweeps<a class="anchor-link" href="#Sweeps"> </a>
+</h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Finding the perfect learning rate for a task isn't easy. Add weight decay, different optimizers, differential learning rates and various scheduler to the mix and search for best hyperparameters becomes a really big task. For that reason there exist automated tools for hyperparameter search. Here we'll look at <code>sweep</code>s functionality provided by W&amp;B.
 It not only facilitates hyperparameter finetuning but also enables great visualization of the results, which might help for further analysis. Check out <a href="https://docs.wandb.ai/guides/sweeps">documentaion</a> for more details.</p>
@@ -909,23 +963,6 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 </div>
 </div>
 </div>
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wandb</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-    
-
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -964,17 +1001,17 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
 <span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
-<span class="n">sweep_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;glue-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">-sweep&quot;</span>
+<span class="n">sweep_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"glue-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">-sweep"</span>
 <span class="n">sweep_config</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">sweep_name</span><span class="p">,</span>
-  <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;random&quot;</span><span class="p">,</span>
-  <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">2e-5</span><span class="p">,</span><span class="mf">3e-5</span><span class="p">,</span><span class="mf">5e-5</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">3e-4</span><span class="p">]},</span>
-        <span class="s2">&quot;wd&quot;</span><span class="p">:{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">5e-2</span><span class="p">]},</span>
-        <span class="s2">&quot;diff_lr_decay_factor&quot;</span><span class="p">:{</span><span class="s2">&quot;values&quot;</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]}</span>
+  <span class="s2">"name"</span><span class="p">:</span> <span class="n">sweep_name</span><span class="p">,</span>
+  <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"random"</span><span class="p">,</span>
+  <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"lr"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">2e-5</span><span class="p">,</span><span class="mf">3e-5</span><span class="p">,</span><span class="mf">5e-5</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">3e-4</span><span class="p">]},</span>
+        <span class="s2">"wd"</span><span class="p">:{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">5e-2</span><span class="p">]},</span>
+        <span class="s2">"diff_lr_decay_factor"</span><span class="p">:{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]}</span>
     <span class="p">},</span>
-  <span class="s2">&quot;metric&quot;</span><span class="p">:{</span><span class="s2">&quot;goal&quot;</span><span class="p">:</span> <span class="s2">&quot;maximise&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">metric_to_monitor</span><span class="p">},</span>
-  <span class="s2">&quot;early_terminate&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;hyperband&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">40</span><span class="p">}</span>
+  <span class="s2">"metric"</span><span class="p">:{</span><span class="s2">"goal"</span><span class="p">:</span> <span class="s2">"maximise"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">metric_to_monitor</span><span class="p">},</span>
+  <span class="s2">"early_terminate"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"hyperband"</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"eta"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"max_iter"</span><span class="p">:</span> <span class="mi">40</span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -992,7 +1029,7 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sweep_id</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">sweep</span><span class="p">(</span><span class="n">sweep_config</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">&#39;glue-benchmark&#39;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sweep_id</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">sweep</span><span class="p">(</span><span class="n">sweep_config</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">'glue-benchmark'</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">"fastai_community"</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -1019,9 +1056,12 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Another-task-example:-MultiNLI">Another task example: MultiNLI<a class="anchor-link" href="#Another-task-example:-MultiNLI"> </a></h2>
+<h2 id="Another-task-example:-MultiNLI">
+<a class="anchor" href="#Another-task-example:-MultiNLI" aria-hidden="true"><span class="octicon octicon-link"></span></a>Another task example: MultiNLI<a class="anchor-link" href="#Another-task-example:-MultiNLI"> </a>
+</h2>
 </div>
 </div>
 </div>
@@ -1032,7 +1072,7 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;mnli&#39;</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">'mnli'</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
 </pre></div>
 
@@ -1050,8 +1090,8 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="s1">&#39;validation_matched&#39;</span><span class="p">)</span>
-<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;validation_matched&#39;</span><span class="p">]])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="s1">'validation_matched'</span><span class="p">)</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="s1">'validation_matched'</span><span class="p">]])</span>
 </pre></div>
 
     </div>
@@ -1083,10 +1123,10 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>{&#39;hypothesis&#39;: &#39;Product and geography are what make cream skimming work. &#39;,
- &#39;idx&#39;: 0,
- &#39;label&#39;: 1,
- &#39;premise&#39;: &#39;Conceptually cream skimming has two basic dimensions - product and geography.&#39;}</pre>
+<pre>{'hypothesis': 'Product and geography are what make cream skimming work. ',
+ 'idx': 0,
+ 'label': 1,
+ 'premise': 'Conceptually cream skimming has two basic dimensions - product and geography.'}</pre>
 </div>
 
 </div>
@@ -1104,9 +1144,9 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;len&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;premise&#39;</span><span class="p">])</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;hypothesis&#39;</span><span class="p">])},</span> <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
-<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">'len'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">'premise'</span><span class="p">])</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">'hypothesis'</span><span class="p">])},</span> <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
+<span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
 </pre></div>
 
     </div>
@@ -1124,10 +1164,10 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
-          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;stsb&#39;</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
+          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'stsb'</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
 <span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">blocks</span><span class="p">,</span>
                    <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
-                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">'label'</span><span class="p">),</span>
                    <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
 </pre></div>
 
@@ -1146,7 +1186,7 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
-<span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;res&#39;</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;val_res&#39;</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
+<span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">'res'</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">'val_res'</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
 <span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">,</span> <span class="n">dl_kwargs</span><span class="o">=</span><span class="n">dl_kwargs</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 
@@ -1246,12 +1286,12 @@ Wall time: 1min 34s
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with Adam lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">task</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">'</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with Adam lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
+<span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="s1">'adam'</span><span class="p">,</span> <span class="n">task</span><span class="p">]</span>
 
-<span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;glue-benchmark&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+<span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">"glue-benchmark"</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">"fastai_community"</span><span class="p">,</span>
            <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
 </pre></div>
 
@@ -1290,7 +1330,7 @@ Wall time: 1min 34s
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
 <span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">'</span><span class="p">)]</span>
 <span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">)</span>
 </pre></div>
 
@@ -1491,7 +1531,8 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>MNLI task has another <em>missmatched</em> validation set. <em>matched</em> set contains in-domain data and the <em>missmatched</em> is a cross-domain.</p>
 
@@ -1505,7 +1546,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_mm_dl</span> <span class="o">=</span> <span class="n">dls</span><span class="o">.</span><span class="n">test_dl</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;validation_mismatched&#39;</span><span class="p">],</span> <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">valid_mm_dl</span> <span class="o">=</span> <span class="n">dls</span><span class="o">.</span><span class="n">test_dl</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">'validation_mismatched'</span><span class="p">],</span> <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">learn</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">dl</span><span class="o">=</span><span class="n">valid_mm_dl</span><span class="p">)</span>
 </pre></div>
 
@@ -1516,20 +1557,25 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Notice that there are similar datasets available (e.g. <code>snli</code> dataset). Those might be used to improve the performance. But for these post I'll limit the scope to GLUE data only and leave the experiments with extra data for upcoming posts.</p>
 
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Low-resource-tasks">Low resource tasks<a class="anchor-link" href="#Low-resource-tasks"> </a></h2>
+<h2 id="Low-resource-tasks">
+<a class="anchor" href="#Low-resource-tasks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Low resource tasks<a class="anchor-link" href="#Low-resource-tasks"> </a>
+</h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Notice that <code>rte</code> task has only 2.5k samples in the training set. This is not much at all for untrivial language task like this one. But we can try to use a small trick for that. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> when reporting GLUE score.</p>
 
@@ -1543,15 +1589,15 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">&#39;rte&#39;</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">'rte'</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
 
 <span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
 
-<span class="n">valid_</span> <span class="o">=</span> <span class="s1">&#39;validation-matched&#39;</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;mnli&#39;</span> <span class="k">else</span> <span class="s1">&#39;validation&#39;</span>
-<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
+<span class="n">valid_</span> <span class="o">=</span> <span class="s1">'validation-matched'</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'mnli'</span> <span class="k">else</span> <span class="s1">'validation'</span>
+<span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">])</span>
 
 <span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">valid_</span><span class="p">)</span>
-<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="n">valid_</span><span class="p">]])</span>
 </pre></div>
 
     </div>
@@ -1583,10 +1629,10 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>{&#39;idx&#39;: 0,
- &#39;label&#39;: 1,
- &#39;sentence1&#39;: &#39;No Weapons of Mass Destruction Found in Iraq Yet.&#39;,
- &#39;sentence2&#39;: &#39;Weapons of Mass Destruction Found in Iraq.&#39;}</pre>
+<pre>{'idx': 0,
+ 'label': 1,
+ 'sentence1': 'No Weapons of Mass Destruction Found in Iraq Yet.',
+ 'sentence2': 'Weapons of Mass Destruction Found in Iraq.'}</pre>
 </div>
 
 </div>
@@ -1605,10 +1651,10 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
-          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">&#39;stsb&#39;</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
+          <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'stsb'</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
 <span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">blocks</span><span class="p">,</span>
                    <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
-                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">),</span>
+                   <span class="n">get_y</span><span class="o">=</span><span class="n">ItemGetter</span><span class="p">(</span><span class="s1">'label'</span><span class="p">),</span>
                    <span class="n">splitter</span><span class="o">=</span><span class="n">IndexSplitter</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">))</span>
 </pre></div>
 
@@ -1694,13 +1740,13 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">&#39;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WANDB_NAME</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">'</span>
+<span class="n">GROUP</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ds_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
+<span class="k">if</span> <span class="n">diff_lr_decay_factor</span><span class="p">:</span> <span class="n">GROUP</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"diff_lr_</span><span class="si">{</span><span class="n">diff_lr_decay_factor</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">NOTES</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'finetuning </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">'</span>
 <span class="n">TAGS</span> <span class="o">=</span><span class="p">[</span><span class="n">model_name</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
 
-<span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;fasthugs&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">&quot;fastai_community&quot;</span><span class="p">,</span>
+<span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">reinit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">"fasthugs"</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="s2">"fastai_community"</span><span class="p">,</span>
            <span class="n">name</span><span class="o">=</span><span class="n">WANDB_NAME</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">GROUP</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">NOTES</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">TAGS</span><span class="p">);</span>
 </pre></div>
 
@@ -1718,7 +1764,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'task'</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
 <span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">)</span>
 </pre></div>
@@ -1738,7 +1784,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">learn</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;distilroberta-base-mnli&#39;</span><span class="p">,</span> <span class="n">with_opt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">learn</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'distilroberta-base-mnli'</span><span class="p">,</span> <span class="n">with_opt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </pre></div>
@@ -1779,7 +1825,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <span class="n">metric_to_monitor</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Metric</span><span class="p">)</span> <span class="k">else</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span>
 <span class="n">cbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">WandbCallback</span><span class="p">(</span><span class="n">log_preds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+       <span class="n">SaveModelCallback</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">metric_to_monitor</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">'</span><span class="p">)]</span>
 <span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">cbs</span><span class="o">=</span><span class="n">cbs</span><span class="p">,</span> <span class="n">pct_start</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </pre></div>
 
@@ -1887,7 +1933,8 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>As one can see by using this simple trick we've improved the result reported at HuggingFace <a href="https://huggingface.co/distilroberta-base#evaluation-results">model card</a> by some 10%. Pretty nice, ha?</p>
 <p>Just to be sure that improvement is due to using model finetuned on <code>mnli</code> let's do another run starting from vanilla <code>distilroberta</code>:</p>
@@ -1902,7 +1949,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="n">glue_num_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'task'</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">metrics</span> <span class="o">=</span> <span class="n">glue_metrics</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
 <span class="n">learn</span> <span class="o">=</span> <span class="n">TransLearner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">opt_func</span><span class="o">=</span><span class="n">opt_func</span><span class="p">)</span>
 </pre></div>
@@ -1934,10 +1981,10 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 <div class="output_area">
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>Some weights of the model checkpoint at distilroberta-base were not used when initializing RobertaForSequenceClassification: [&#39;lm_head.bias&#39;, &#39;lm_head.dense.weight&#39;, &#39;lm_head.dense.bias&#39;, &#39;lm_head.layer_norm.weight&#39;, &#39;lm_head.layer_norm.bias&#39;, &#39;lm_head.decoder.weight&#39;, &#39;roberta.pooler.dense.weight&#39;, &#39;roberta.pooler.dense.bias&#39;]
+<pre>Some weights of the model checkpoint at distilroberta-base were not used when initializing RobertaForSequenceClassification: ['lm_head.bias', 'lm_head.dense.weight', 'lm_head.dense.bias', 'lm_head.layer_norm.weight', 'lm_head.layer_norm.bias', 'lm_head.decoder.weight', 'roberta.pooler.dense.weight', 'roberta.pooler.dense.bias']
 - This IS expected if you are initializing RobertaForSequenceClassification from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
 - This IS NOT expected if you are initializing RobertaForSequenceClassification from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
-Some weights of RobertaForSequenceClassification were not initialized from the model checkpoint at distilroberta-base and are newly initialized: [&#39;classifier.dense.weight&#39;, &#39;classifier.dense.bias&#39;, &#39;classifier.out_proj.weight&#39;, &#39;classifier.out_proj.bias&#39;]
+Some weights of RobertaForSequenceClassification were not initialized from the model checkpoint at distilroberta-base and are newly initialized: ['classifier.dense.weight', 'classifier.dense.bias', 'classifier.out_proj.weight', 'classifier.out_proj.bias']
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
 </pre>
 </div>
@@ -2040,16 +2087,21 @@ You should probably TRAIN this model on a down-stream task to be able to use it 
 </div>
     
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>The same is applicable for STSB taks, which has 7k training samples. Performance gain for STSB is not so prominent but it's still there. You can compare the results for cold and warm starts in this <a href="https://wandb.ai/fastai_community/glue-benchmark/reports/Warm-Start-for-Low-Data-tasks--Vmlldzo2NzA3NTI">W&amp;B report</a>.</p>
 
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Concluding-thoughts">Concluding thoughts<a class="anchor-link" href="#Concluding-thoughts"> </a></h2><p>With this we have an simple easy to use framework for quick experimentation with LM finetuning. HuggingFace provides us with huge variety of state of the art Transformers and fastai facilitates configurable training loop with gret API. You are wellcomed to share your comments in dedicated fastai <a href="https://forums.fast.ai/t/finetuning-transformers-thread/88053">forums topic</a>, try out <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a> (I'm happy to here your opinions and accept feature requests) and finally open this notebook on Colab, select your task and try to set new best for the model.</p>
+<h2 id="Concluding-thoughts">
+<a class="anchor" href="#Concluding-thoughts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Concluding thoughts<a class="anchor-link" href="#Concluding-thoughts"> </a>
+</h2>
+<p>With this we have an simple easy to use framework for quick experimentation with LM finetuning. HuggingFace provides us with huge variety of state of the art Transformers and fastai facilitates configurable training loop with gret API. You are wellcomed to share your comments in dedicated fastai <a href="https://forums.fast.ai/t/finetuning-transformers-thread/88053">forums topic</a>, try out <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a> (I'm happy to here your opinions and accept feature requests) and finally open this notebook on Colab, select your task and try to set new best for the model.</p>
 
 </div>
 </div>
@@ -2062,7 +2114,15 @@ You should probably TRAIN this model on a down-stream task to be able to use it 
 
 
 
-  </div><a class="u-url" href="/thoughtsamples/2021/05/07/glue-benchmark.html" hidden></a>
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="arampacha/thoughtsamples"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html" hidden></a>
 </article>
       </div>
     </main><footer class="site-footer h-card">
