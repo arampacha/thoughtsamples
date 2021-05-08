@@ -96,7 +96,7 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      26 min read
+      27 min read
     
 </span></p>
 
@@ -144,7 +144,7 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h3"><a href="#Sweeps">Sweeps </a></li>
 </ul>
 </li>
-<li class="toc-entry toc-h2"><a href="#Another-task-example:-MultiNLI">Another task example: MultiNLI </a></li>
+<li class="toc-entry toc-h2"><a href="#Another-task-example:-MNLI">Another task example: MNLI </a></li>
 <li class="toc-entry toc-h2"><a href="#Low-resource-tasks">Low resource tasks </a></li>
 <li class="toc-entry toc-h2"><a href="#Concluding-thoughts">Concluding thoughts </a></li>
 </ul><!--
@@ -1061,9 +1061,11 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Another-task-example:-MultiNLI">
-<a class="anchor" href="#Another-task-example:-MultiNLI" aria-hidden="true"><span class="octicon octicon-link"></span></a>Another task example: MultiNLI<a class="anchor-link" href="#Another-task-example:-MultiNLI"> </a>
+<h2 id="Another-task-example:-MNLI">
+<a class="anchor" href="#Another-task-example:-MNLI" aria-hidden="true"><span class="octicon octicon-link"></span></a>Another task example: MNLI<a class="anchor-link" href="#Another-task-example:-MNLI"> </a>
 </h2>
+<p>MNLI task is interesting for a couple of reasons. It has the largest training set in the benchmark, for the results of training for MNLI might be useful for smaller tasks as we will consider in the next section. Unlike most of the GLUE tasks, which ar formulated as binary classification problem, this one has three categories: entailment, neutral and contradiction. One can argue that solving such kind of problem should envolve more "understanding" of the meaning of text.</p>
+
 </div>
 </div>
 </div>
@@ -1076,23 +1078,7 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="s1">'mnli'</span><span class="p">;</span> <span class="n">validate_task</span><span class="p">()</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-    
-
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="s1">'validation_matched'</span><span class="p">)</span>
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">valid_idx</span> <span class="o">=</span> <span class="n">get_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="s1">'validation_matched'</span><span class="p">)</span>
 <span class="n">train_ds</span> <span class="o">=</span> <span class="n">concatenate_datasets</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="s1">'train'</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="s1">'validation_matched'</span><span class="p">]])</span>
 </pre></div>
 
@@ -1103,6 +1089,14 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Each sample contains <code>premise</code> and <code>hypothesis</code>, the task is to determine whether the <code>hypothesis</code> entails, contradicts or is neutral to the <code>premise</code>. Let's check out an example:</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -1139,6 +1133,14 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The data preparation and dataloaders construction do not differ much from those for previous task:</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -1149,23 +1151,8 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">lens</span> <span class="o">=</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s1">'len'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">'premise'</span><span class="p">])</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">'hypothesis'</span><span class="p">])},</span> <span class="n">remove_columns</span><span class="o">=</span><span class="n">train_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keep_in_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">train_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
 <span class="n">valid_lens</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)[</span><span class="s1">'len'</span><span class="p">]</span>
-</pre></div>
 
-    </div>
-</div>
-</div>
-
-</div>
-    
-
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
+<span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">TransformersTextBlock</span><span class="p">(</span><span class="n">pretrained_model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">),</span>
           <span class="n">RegressionBlock</span><span class="p">()</span> <span class="k">if</span> <span class="n">task</span><span class="o">==</span><span class="s1">'stsb'</span> <span class="k">else</span> <span class="n">CategoryBlock</span><span class="p">()]</span>
 <span class="n">dblock</span> <span class="o">=</span> <span class="n">DataBlock</span><span class="p">(</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">blocks</span><span class="p">,</span>
                    <span class="n">get_x</span><span class="o">=</span><span class="n">TextGetter</span><span class="p">(</span><span class="o">*</span><span class="n">glue_textfields</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span>
@@ -1187,41 +1174,9 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
-<span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">'res'</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">'val_res'</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dl_kwargs</span><span class="o">=</span><span class="p">[{</span><span class="s1">'res'</span><span class="p">:</span><span class="n">train_lens</span><span class="p">},</span> <span class="p">{</span><span class="s1">'val_res'</span><span class="p">:</span><span class="n">valid_lens</span><span class="p">}]</span>
 <span class="n">dls</span> <span class="o">=</span> <span class="n">dblock</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">val_bs</span><span class="o">=</span><span class="n">val_bs</span><span class="p">,</span> <span class="n">dl_kwargs</span><span class="o">=</span><span class="n">dl_kwargs</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>CPU times: user 1min 27s, sys: 4.89 s, total: 1min 32s
-Wall time: 1min 34s
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
-</div>
-    
-
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">(</span><span class="n">max_n</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -1304,6 +1259,14 @@ Wall time: 1min 34s
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Training procedure is also very similar:</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -1579,7 +1542,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Notice that <code>rte</code> task has only 2.5k samples in the training set. This is not much at all for untrivial language task like this one. But we can try to use a small trick for that. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> when reporting GLUE score.</p>
+<p>Some daatsets are rather small, RTE has only 2.5k samples in the training set. This is not much at all for untrivial language task like this one. But we can try to use a small trick for that. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> when reporting GLUE score.</p>
 
 </div>
 </div>
