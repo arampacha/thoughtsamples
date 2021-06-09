@@ -193,10 +193,11 @@ window.onload = wrap_img;
 <h2 id="Introduction">
 <a class="anchor" href="#Introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction<a class="anchor-link" href="#Introduction"> </a>
 </h2>
-<p>In this blogpost we will look at how to combine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will be finetuning <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a> tasks. To make integration of HF models with fastai training loop smooth I'm using lightweight wrapper library <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a>. It is currently under development and we'll be introducing more features together with NLP related blogposts like this one.</p>
+<p>In this blogpost we will look at how to combine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will finetune <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a>. GLUE consists of 8 diverse sequence classification and one regression task.</p>
+<p>I'll use <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a> to make HuggingFace+fastai integration smooth.</p>
 <blockquote>
 <p>Fun fact:GLUE benchmark was introduced in this <a href="https://arxiv.org/abs/1804.07461">paper</a> in 2018 as tough to beat benchmark to chellange NLP systems and in just about a year new <a href="https://arxiv.org/abs/1911.11763">SuperGLUE</a> benchmark was introduced because original GLUE has become too easy for the models.
-To give you a grasp on what are we dealing with, here is a brief summary of GLUE tasks:</p>
+To give you a grasp on what we are dealing with, here is a brief summary of GLUE tasks:</p>
 </blockquote>
 
 </div>
@@ -355,7 +356,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>To make switching between datasets smooth I'll define couple of dictionaries containing per-task information. We'll need metrics, text fields to retrieve data and number of outputs for the model.</p>
+<p>To make switching between datasets smooth I define couple of dictionaries containing per-task information. We need metrics, text fields to retrieve data and number of outputs for the model.</p>
 
 </div>
 </div>
@@ -678,7 +679,7 @@ To give you a grasp on what are we dealing with, here is a brief summary of GLUE
 And even better thanks to Morgan McGuire (@morg) we have an open W&amp;B project. You just need to log your runs under <code>glue-benchmark</code> project and set <code>entity="fastai_community"</code> and your results will be added to the pull for further investigation of hyperparameters. The fastest way to start participating would be to fork this notebook as it is set up to run any of the GLUE tasks with minimal changes.
 There is a lot to try: gradual unfreezing strategy is reported not to be helpful when finetuning Transformer-based models (for example see a discussion <a href="https://github.com/huggingface/transformers/pull/11533">here</a>); differential learning rates are used in NLP [<a href="https://arxiv.org/abs/1905.05583">1</a>, <a href="https://arxiv.org/abs/2003.10555">2</a>] but are not common practice, do we need to use weight decay, if yes - how much and where, what suggestions from LR-finder work best? These are only few of many open questions and there are so much more.
 And even more interesting one how do this scale with dataset and model size?</p>
-<p>Deep Learning as of now is highly empirical field and experiments require both some engeniering and compute. This post is aimed to fuel comunity effort towards finding empirical truth by joining small forces together. Even if you're new to NLP do not hasitate to participate and run couple of experiments while learning along the way!</p>
+<p>Deep Learning as of now is highly empirical field and experiments require both some engendering and compute. This post is aimed to fuel community effort towards finding empirical truth by joining small forces together. Even if you're new to NLP do not hesitate to participate and run couple of experiments while learning along the way!</p>
 
 </div>
 </div>
@@ -839,6 +840,14 @@ Better model found at epoch 3 with accuracy value: 0.9254587292671204.
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It's always useful to check your model predictions after training. fastai makes this very simple:</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -961,7 +970,7 @@ Better model found at epoch 3 with accuracy value: 0.9254587292671204.
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Finding the perfect learning rate for a task isn't easy. Add weight decay, different optimizers, differential learning rates and various scheduler to the mix and search for best hyperparameters becomes a really big task. For that reason there exist automated tools for hyperparameter search. Here we'll look at <code>sweep</code>s functionality provided by W&amp;B.
+<p>Finding the perfect learning rate for a task isn't easy. Add weight decay, different optimizers, differential learning rates and various scheduler to the mix and search for the best hyperparameters becomes a really big task. For that reason there exist automated tools for hyperparameter search. Here we'll look at <code>sweep</code>s functionality provided by W&amp;B.
 It not only facilitates hyperparameter finetuning but also enables great visualization of the results, which might help for further analysis. Check out <a href="https://docs.wandb.ai/guides/sweeps">documentaion</a> for more details.</p>
 
 </div>
@@ -1566,7 +1575,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Some daatsets are rather small, RTE has only 2.5k samples in the training set. This is not much at all for untrivial language task like this one. But we can try to use a small trick for that. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> when reporting GLUE score.</p>
+<p>Some daatsets are rather small, RTE has only 2.5k samples in the training set. This is not much at all for nontrivial language task like this one. But we can try to use a small trick to improve the results. The MNLI task is quite similar and has much more training data. Let's reuse model trained on it for improving RTE score. This trick is common practice and has been employed in original <a href="https://arxiv.org/abs/1907.11692">RoBERTa paper</a> when reporting GLUE score.</p>
 
 </div>
 </div>
