@@ -193,7 +193,7 @@ window.onload = wrap_img;
 <h2 id="Introduction">
 <a class="anchor" href="#Introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction<a class="anchor-link" href="#Introduction"> </a>
 </h2>
-<p>In this blogpost we will look at how to conbine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will be finetuning <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a> tasks. To make integration of HF models with fastai training loop smooth I'm using lightweight wrapper library <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a>. It is currently under development and we'll be inroducing more features together with NLP related blogposts like this one.</p>
+<p>In this blogpost we will look at how to combine the power of <a href="https://huggingface.co/">HuggingFace</a> with great flexibility of <a href="https://www.fast.ai/">fastai</a>. For this purpose we will be finetuning <code>distilroberta-base</code> on The <a href="https://gluebenchmark.com/">General Language Understanding Evaluation(GLUE) benchmark</a> tasks. To make integration of HF models with fastai training loop smooth I'm using lightweight wrapper library <a href="https://github.com/aikindergarten/fasthugs">fasthugs</a>. It is currently under development and we'll be introducing more features together with NLP related blogposts like this one.</p>
 <blockquote>
 <p>Fun fact:GLUE benchmark was introduced in this <a href="https://arxiv.org/abs/1804.07461">paper</a> in 2018 as tough to beat benchmark to chellange NLP systems and in just about a year new <a href="https://arxiv.org/abs/1911.11763">SuperGLUE</a> benchmark was introduced because original GLUE has become too easy for the models.
 To give you a grasp on what are we dealing with, here is a brief summary of GLUE tasks:</p>
@@ -852,7 +852,10 @@ Better model found at epoch 3 with accuracy value: 0.9254587292671204.
     </div>
 </div>
 </div>
-
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Output" data-close="Show Output"></summary>
+        <p>
+</p>
 <div class="output_wrapper">
 <div class="output">
 
@@ -942,6 +945,7 @@ Better model found at epoch 3 with accuracy value: 0.9254587292671204.
 </div>
 </div>
 
+    </details>
 </div>
     
 
@@ -992,6 +996,14 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here we'll do a grid search over combinations of learning rate, weight decay and differential learning rates. Differential learning rates is specified by decay factor $\gamma$: $lr$ for layer $l$ are are determined as ${lr_0}*\gamma^{L-l}$, where L is total number of layers.</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -1006,9 +1018,9 @@ It not only facilitates hyperparameter finetuning but also enables great visuali
     <span class="s2">"project"</span><span class="p">:</span><span class="s2">"glue-benchmark"</span><span class="p">,</span>
     <span class="s2">"entity"</span><span class="p">:</span><span class="s2">"fastai_cimmunity"</span><span class="p">,</span>
     <span class="s2">"name"</span><span class="p">:</span> <span class="n">sweep_name</span><span class="p">,</span>
-    <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"random"</span><span class="p">,</span>
+    <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"grid"</span><span class="p">,</span>
     <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"lr"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">2e-5</span><span class="p">,</span><span class="mf">3e-5</span><span class="p">,</span><span class="mf">5e-5</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">3e-4</span><span class="p">]},</span>
+        <span class="s2">"lr"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">2e-5</span><span class="p">,</span><span class="mf">3e-5</span><span class="p">,</span><span class="mf">5e-5</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">]},</span>
         <span class="s2">"wd"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">5e-2</span><span class="p">]},</span>
         <span class="s2">"diff_lr_decay_factor"</span><span class="p">:{</span><span class="s2">"values"</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]}</span>
     <span class="p">},</span>
@@ -1401,7 +1413,10 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
     </div>
 </div>
 </div>
-
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Output" data-close="Show Output"></summary>
+        <p>
+</p>
 <div class="output_wrapper">
 <div class="output">
 
@@ -1501,6 +1516,7 @@ Better model found at epoch 3 with accuracy value: 0.8437086343765259.
 </div>
 </div>
 
+    </details>
 </div>
     
 

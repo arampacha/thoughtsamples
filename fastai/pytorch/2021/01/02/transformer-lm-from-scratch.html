@@ -96,7 +96,7 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      26 min read
+      27 min read
     
 </span></p>
 
@@ -1260,7 +1260,7 @@ In brief the authors state that SelfAttention layers compute precise contextual 
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Unlike RNN the tranformer is not a stateful model. This means it treats each sequence indepently and can only attend within fixed length context. This limitation was adressed by authors of <a href="https://arxiv.org/abs/1901.02860">Transformer-XL paper</a> where adding a segment-level recurrence mechanism and a novel positional encoding scheme were proposed to enable capturing long-term dependencies. I will not go into details of TransformerXL architecture here. As will shell see stateless transformer can also learn a lot about the structure of our data.</p>
+<p>Unlike RNN the tranformer is not a stateful model. This means it treats each sequence indepently and can only attend within fixed length context. This limitation was addressed by authors of <a href="https://arxiv.org/abs/1901.02860">Transformer-XL paper</a> where adding a segment-level recurrence mechanism and a novel positional encoding scheme were proposed to enable capturing long-term dependencies. I will not go into details of TransformerXL architecture here. As we shell see stateless transformer can also learn a lot about the structure of our data.</p>
 <p>One thing to note in this case is that we don't need to maintain the structure of the data outside of the sequences, so we can shuffle the sequences randomly in the dataloader.</p>
 
 </div>
@@ -1352,7 +1352,7 @@ In brief the authors state that SelfAttention layers compute precise contextual 
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Before we did average pooling over seq_len dimention. Our model didn't care about the order of the tokens at all. But actually order of the tokens in a sentence matter a lot. In our case <code>one hundred two</code> and <code>two hundred one</code> are pretty different and <code>hundred one two</code> doesn't make sense.</p>
+<p>Before we did average pooling over seq_len dimension. Our model didn't care about the order of the tokens at all. But actually order of the tokens in a sentence matter a lot. In our case <code>one hundred two</code> and <code>two hundred one</code> are pretty different and <code>hundred one two</code> doesn't make sense.</p>
 <p>To encorporate positional information into the model authors of the transformer architecture proposed to use positional encodings in addition to regular token embeddings. Positional encodings may be learned, but it's also possible to use hardcoded encodings. For instance encodings may be composed of sin and cos.
 In this way each position in a sequence will get unique vector associated with it.</p>
 
@@ -1611,8 +1611,8 @@ In this way each position in a sequence will get unique vector associated with i
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Wow! Thats a great accuracy! So the problem is solved and we only needed one attention layer and 2 layer deep feed-forward block? Don't you feel somewhat skeptical about this result?</p>
-<p>Well, you should be! Think about what we did here: the goal was to predict a target sequence, say <code>['.','two','.','three','.','four']</code> from an input <code>['one','.','two','.','three','.']</code>. These two sequences intersect on all positions except the first and the last one. So models needs to learn simply to copy input tokens starting from the second one to the outputs. In our case this will result in 15 correct predictions of total 16 positions, thats almost 94% accuracy. This makes the task very simple but not very useful to learn. To train proper autoregressive language model, as we did with RNNs, a concept of masking is to be introduced.</p>
+<p>Wow! That's a great accuracy! So the problem is solved and we only needed one attention layer and 2 layer deep feed-forward block? Don't you feel somewhat skeptical about this result?</p>
+<p>Well, you should be! Think about what we did here: the goal was to predict a target sequence, say <code>['.','two','.','three','.','four']</code> from an input <code>['one','.','two','.','three','.']</code>. These two sequences intersect on all positions except the first and the last one. So models needs to learn simply to copy input tokens starting from the second one to the outputs. In our case this will result in 15 correct predictions of total 16 positions, that's almost 94% accuracy. This makes the task very simple but not very useful to learn. To train proper autoregressive language model, as we did with RNNs, a concept of masking is to be introduced.</p>
 
 </div>
 </div>
@@ -1728,7 +1728,7 @@ In this way each position in a sequence will get unique vector associated with i
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We should also modify the attention layer to except mask:</p>
+<p>We should also modify the attention layer to accept mask:</p>
 
 </div>
 </div>
@@ -1883,7 +1883,7 @@ In this way each position in a sequence will get unique vector associated with i
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Now we get somewhat lower accuracy, which is expected given that the task has become more difficult. Also training loss is significantly lower than validation loss, which means the model is overfitting. Let's see if the same approaches as was taken to RNNs can help.</p>
+<p>Now we get somewhat lower accuracy, which is expected given that the task has become more difficult. Also training loss is significantly lower than validation loss, which means the model is overfitting. Let's see if the same approaches as was applied to RNNs can help.</p>
 
 </div>
 </div>
@@ -2056,7 +2056,7 @@ In this way each position in a sequence will get unique vector associated with i
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If you are familiar with ResNets the proposed solution will not surprise you much. The idea is simple yet very effective. Instead of returning modified output $f(x)$ each transformer sublayer will return $x + f(x)$. Thishow to produce  allows the original input to propagate freely through the model. So the model learns not an entirely new representation of $x$ but how to modify $x$ to add some useful information to the original representation.</p>
+<p>If you are familiar with ResNets the proposed solution will not surprise you much. The idea is simple yet very effective. Instead of returning modified output $f(x)$ each transformer sublayer will return $x + f(x)$. This allows the original input to propagate freely through the model. So the model learns not an entirely new representation of $x$ but how to modify $x$ to add some useful information to the original representation.</p>
 <p>As we modify layers to include the residual connections let's also add some regularization by inserting Dropout layers.</p>
 
 </div>
@@ -2337,7 +2337,7 @@ In this way each position in a sequence will get unique vector associated with i
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Learning to predict numbers is great, but let's try something more fun. We can train a langyage model generate some texts. For example let's try to generate some text in style of Lewis Carroll. For this we'll fit a language model on "Alice in Wonderland" and "Through the looking glass".</p>
+<p>Learning to predict numbers is great, but let's try something more entertaining. We can train a language model to generate texts. For example let's try to generate some text in style of Lewis Carroll. For this we'll fit a language model on "Alice in Wonderland" and "Through the looking glass".</p>
 
 </div>
 </div>
@@ -2772,7 +2772,10 @@ alice was beginning to get very tired of sitting by her sister on
     </div>
 </div>
 </div>
-
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Output" data-close="Show Output"></summary>
+        <p>
+</p>
 <div class="output_wrapper">
 <div class="output">
 
@@ -3057,6 +3060,7 @@ alice was beginning to get very tired of sitting by her sister on
 </div>
 </div>
 
+    </details>
 </div>
     
 
@@ -3066,6 +3070,8 @@ alice was beginning to get very tired of sitting by her sister on
 <h3 id="Text-generation">
 <a class="anchor" href="#Text-generation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Text generation<a class="anchor-link" href="#Text-generation"> </a>
 </h3>
+<p>Text generation is a big topic on it's own. One can refer to great posts <a href="https://huggingface.co/blog/how-to-generate">by Patrick von Platen from HuggingFace</a> and <a href="https://lilianweng.github.io/lil-log/2021/01/02/controllable-neural-text-generation.html">Lilian Weng</a> for more details on various approaches. Here I will use nucleus sampling. This method rallies on sampling from candidates compounding certain value of probability mass. Intuitively this approach should work for character level generation: when there is only one grammatically correct option for continuation we always want to select it, but when starting a new word some diversity in outputs is desirable.</p>
+
 </div>
 </div>
 </div>
@@ -3103,7 +3109,7 @@ alice was beginning to get very tired of sitting by her sister on
             <span class="n">top_p</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
             <span class="n">early_stopping</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="c1">#need eos_idx to work</span>
             <span class="n">eos_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="c1">#TODO test for potential problems</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
     <span class="n">thresh</span> <span class="o">=</span> <span class="n">top_p</span>
     <span class="n">inp</span> <span class="o">=</span> <span class="n">expand_dim1</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
@@ -3184,9 +3190,25 @@ alice was beginning to get very tired of sitting by her sister on
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>Our relatively simple model learned to generate mostly grammatically plausible text, but it's not entirely coherent. But it would be too much to ask from the model to learn language from scratch by "reading" only two novels (however great those novels are).  To get more from the model let's feed it larger corpus of data.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Pretraining-on-larger-dataset">
 <a class="anchor" href="#Pretraining-on-larger-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pretraining on larger dataset<a class="anchor-link" href="#Pretraining-on-larger-dataset"> </a>
 </h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For this purpose I will use a sample from <a href="https://huggingface.co/datasets/bookcorpus">bookcorpus dataset</a>.</p>
+
 </div>
 </div>
 </div>
@@ -3342,6 +3364,9 @@ Dataset bookcorpus downloaded and prepared to /root/.cache/huggingface/datasets/
     
     
 <div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
 <div class="input">
 
 <div class="inner_cell">
@@ -3359,6 +3384,7 @@ Dataset bookcorpus downloaded and prepared to /root/.cache/huggingface/datasets/
 </div>
 </div>
 
+    </details>
 </div>
     
 
@@ -3627,6 +3653,8 @@ Wall time: 13min 35s
 <h3 id="Finetune-on-Carrolls'-books">
 <a class="anchor" href="#Finetune-on-Carrolls'-books" aria-hidden="true"><span class="octicon octicon-link"></span></a>Finetune on Carrolls' books<a class="anchor-link" href="#Finetune-on-Carrolls'-books"> </a>
 </h3>
+<p>Finally we can finetune the pretrained bookcorpus model on Carroll's books. This will determine the style of generated text.</p>
+
 </div>
 </div>
 </div>
