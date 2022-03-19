@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html</loc>
+<loc>https://blog.abstrukt.co/fastai/pytorch/2021/01/02/transformer-lm-from-scratch.html</loc>
 <lastmod>2021-01-02T00:00:00-06:00</lastmod>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html</loc>
+<loc>https://blog.abstrukt.co/fastai/huggingface/transformers/2021/05/07/glue-benchmark.html</loc>
 <lastmod>2021-05-07T00:00:00-05:00</lastmod>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/asr/transformers/wav2vec2/self-training/2022/02/18/self-training-for-asr.html</loc>
+<loc>https://blog.abstrukt.co/asr/transformers/wav2vec2/self-training/2022/02/18/self-training-for-asr.html</loc>
 <lastmod>2022-02-18T00:00:00-06:00</lastmod>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/about/</loc>
+<loc>https://blog.abstrukt.co/about/</loc>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/</loc>
+<loc>https://blog.abstrukt.co/</loc>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/search/</loc>
+<loc>https://blog.abstrukt.co/search/</loc>
 </url>
 <url>
-<loc>https://arampacha.github.io/thoughtsamples/categories/</loc>
+<loc>https://blog.abstrukt.co/categories/</loc>
 </url>
 </urlset>

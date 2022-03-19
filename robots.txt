@@ -1,1 +1,1 @@
-Sitemap: https://arampacha.github.io/thoughtsamples/sitemap.xml
+Sitemap: https://blog.abstrukt.co/sitemap.xml
