@@ -40,7 +40,7 @@
   
       ,"page1": {
           "title": "About Me",
-          "content": "This website is powered by fastpages 1. . a blogging platform that natively supports Jupyter notebooks in addition to other formats. &#8617; . |",
+          "content": "I’m independent AI Researcher and ML Engineer. . Other articles I had pleasure to co-author: . Our Reproducibility Challenge Experience with Morgan, Hallvar and our fastai community team . Fine tuning CLIP with Remote Sensing (Satellite) images and captions with Sujit Pal and TWIML community team . You can check out my open source projects at github . This website is powered by fastpages. .",
           "url": "https://blog.abstrukt.co/about/",
           "relUrl": "/about/",
           "date": ""
